@@ -16,49 +16,118 @@ namespace Cache_Server
             Dictionary<string, int> map = new Dictionary<string, int>();
 
             Console.WriteLine("I Am Cache Server");
+            var CacheIp = "http://localhost:45680/";
 
 
-            var ip = IPAddress.Loopback;
-            var port = 1111;
-            var Server = new TcpListener(ip, port + 1);
-            Server.Start(100);
+            var Server = new HttpListener();
+
+            Server.Prefixes.Add(CacheIp);
+            Server.Start();
+
 
             while (true)
             {
 
-                var client = Server.AcceptTcpClient();
-                Console.WriteLine($"{client.Client.RemoteEndPoint} Client Connected");
+                var client = Server.GetContext();
+                Console.WriteLine($"{client.Request.RemoteEndPoint} Client Connected");
+                var Request = client.Request;
+                var Response = client.Response;
+                var ClientReader = new StreamReader(Request.InputStream);
 
-                BinaryReader reader = new BinaryReader(client.GetStream());
+                var Method = Request.HttpMethod;
+                var ClientData = ClientReader.ReadToEnd();
+                if (Method == "POST")
+                    if (ClientData.ToUpper().StartsWith("GET"))
+                        Method = "GET";
 
-                var ClientData = reader.ReadString();
-                if (ClientData.Split('-')[0] == "Add")
+                switch (Method)
                 {
-                    Console.WriteLine("Value Added ",ClientData.Split('-')[1]);
-                    map[ClientData.Split('-')[1]] = int.Parse(ClientData.Split('-')[2]);
-                }
-                else
-                {
-                    BinaryWriter binaryWriter = new BinaryWriter(client.GetStream());
-                    try
-                    {
-                        var CacheData = map[ClientData];
-                        Console.WriteLine("Cache Data Found And We Returned Server");
-                        binaryWriter.Write(CacheData.ToString());
+                    case "GET":
+                    System.Console.WriteLine("Cache Server Get Method");
+                        try
+                        {
+                            ClientData = ClientData.Split('-')[1];
+                            var CacheData = map[ClientData];
+                            Console.WriteLine("Cache Data Found And We Returned Server");
+                            Response.StatusCode = 200;
+                            var ResponseWriter = new StreamWriter(Response.OutputStream);
+                            ResponseWriter.WriteLine(ClientData + " " + CacheData);
+                            ResponseWriter.Flush();
+                            Response.Close();
 
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Cache Data Not Found");
-                        binaryWriter.Write("null");
-                    }
+                        }
+                        catch (System.Exception)
+                        {
+                            Console.WriteLine("Cache Data Not Found");
+                            Response.StatusCode = 404;
+                            Response.Close();
+                        }
+                        break;
+                    case "PUT":
+                    System.Console.WriteLine("Cache Server Put Method");
+                        try
+                        {
+                            var IsHave = map[ClientData.Split('-')[0]];
+                            map[ClientData.Split('-')[0]] = int.Parse(ClientData.Split('-')[1]);
+                            Response.StatusCode = 200;
+                            Response.Close();
+
+                        }
+                        catch (Exception)
+                        {
+                            Response.StatusCode = 404;
+                            Response.Close();
+                        }
+                        break;
+                    case "POST":
+                    System.Console.WriteLine("Cache Server Post Method");
+                        try
+                        {
+                            var IsHave = map[ClientData.Split('-')[0]];
+                            Response.StatusCode = 404;
+                            Response.Close();
+
+                        }
+                        catch (Exception)
+                        {
+                            map[ClientData.Split('-')[0]] = int.Parse(ClientData.Split('-')[1]);
+                            Response.StatusCode = 200;
+                            Response.Close();
+                        }
+                        break;
+                    default:
+                        break;
                 }
+
+
+                //     var ClientData = reader.ReadString();
+                //     if (ClientData.Split('-')[0] == "Add")
+                //     {
+                //         Console.WriteLine("Value Added ", ClientData.Split('-')[1]);
+                //         map[ClientData.Split('-')[1]] = int.Parse(ClientData.Split('-')[2]);
+                //     }
+                //     else
+                //     {
+                //         BinaryWriter binaryWriter = new BinaryWriter(client.GetStream());
+                //         try
+                //         {
+                //             var CacheData = map[ClientData];
+                //             Console.WriteLine("Cache Data Found And We Returned Server");
+                //             binaryWriter.Write(CacheData.ToString());
+
+                //         }
+                //         catch (Exception)
+                //         {
+                //             Console.WriteLine("Cache Data Not Found");
+                //             binaryWriter.Write("null");
+                //         }
+                //     }
+
+
+
 
 
             }
-
-
-
         }
     }
 }
