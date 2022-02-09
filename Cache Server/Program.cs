@@ -37,13 +37,17 @@ namespace Cache_Server
                 var Method = Request.HttpMethod;
                 var ClientData = ClientReader.ReadToEnd();
                 if (Method == "POST")
+                {
                     if (ClientData.ToUpper().StartsWith("GET"))
                         Method = "GET";
+                    if (ClientData.ToUpper().StartsWith("DELETE"))
+                        Method = "DELETE";
+                }
 
                 switch (Method)
                 {
                     case "GET":
-                    System.Console.WriteLine("Cache Server Get Method");
+                        System.Console.WriteLine("Cache Server Get Method");
                         try
                         {
                             ClientData = ClientData.Split('-')[1];
@@ -64,7 +68,7 @@ namespace Cache_Server
                         }
                         break;
                     case "PUT":
-                    System.Console.WriteLine("Cache Server Put Method");
+                        System.Console.WriteLine("Cache Server Put Method");
                         try
                         {
                             var IsHave = map[ClientData.Split('-')[0]];
@@ -80,7 +84,7 @@ namespace Cache_Server
                         }
                         break;
                     case "POST":
-                    System.Console.WriteLine("Cache Server Post Method");
+                        System.Console.WriteLine("Cache Server Post Method");
                         try
                         {
                             var IsHave = map[ClientData.Split('-')[0]];
@@ -95,38 +99,27 @@ namespace Cache_Server
                             Response.Close();
                         }
                         break;
+                    case "DELETE":
+                        ClientData = ClientData.Split('-')[1];
+                         System.Console.WriteLine("Cache Server Delete Method");
+                        try
+                        {
+                            var IsHave = map[ClientData];
+                            map.Remove(ClientData);
+                            Response.StatusCode = 200;
+                            Response.Close();
+
+                        }
+                        catch (Exception)
+                        {
+                            Response.StatusCode = 404;
+                            Response.Close();
+                        }
+
+                        break;
                     default:
                         break;
                 }
-
-
-                //     var ClientData = reader.ReadString();
-                //     if (ClientData.Split('-')[0] == "Add")
-                //     {
-                //         Console.WriteLine("Value Added ", ClientData.Split('-')[1]);
-                //         map[ClientData.Split('-')[1]] = int.Parse(ClientData.Split('-')[2]);
-                //     }
-                //     else
-                //     {
-                //         BinaryWriter binaryWriter = new BinaryWriter(client.GetStream());
-                //         try
-                //         {
-                //             var CacheData = map[ClientData];
-                //             Console.WriteLine("Cache Data Found And We Returned Server");
-                //             binaryWriter.Write(CacheData.ToString());
-
-                //         }
-                //         catch (Exception)
-                //         {
-                //             Console.WriteLine("Cache Data Not Found");
-                //             binaryWriter.Write("null");
-                //         }
-                //     }
-
-
-
-
-
             }
         }
     }

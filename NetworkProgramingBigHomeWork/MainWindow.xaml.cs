@@ -38,11 +38,6 @@ namespace NetworkProgramingBigHomeWork
             Client = new HttpClient();
             var ServerIp = "http://localhost:45679/";
 
-            // BinaryWriter br = new BinaryWriter(Client.GetStream());
-            // br.Write(txt.Text);
-            // BinaryReader binaryReader = new BinaryReader(Client.GetStream());
-            // var Value = binaryReader.ReadString();
-            // MessageBox.Show($"{txt.Text} -- {Value}");
             if (!string.IsNullOrWhiteSpace(txt.Text))
             {
                 if (txt.Text.ToUpper().Split('-')[0] == "GET")
@@ -56,9 +51,7 @@ namespace NetworkProgramingBigHomeWork
                         MessageBox.Show(content);
                     }
                     else
-                    {
                         txt.Text = "Not Found";
-                    }
                 }
                 else if (txt.Text.ToUpper().Split('-')[0] == "POST")
                 {
@@ -72,8 +65,8 @@ namespace NetworkProgramingBigHomeWork
                 }
                 else if (txt.Text.ToUpper().Split('-')[0] == "DELETE")
                 {
-                    var message = new HttpRequestMessage(HttpMethod.Delete, ServerIp);
-                    message.Content = new StringContent(txt.Text.Split('-')[1], Encoding.UTF8, "text/plain");
+                    var message = new HttpRequestMessage(HttpMethod.Post, ServerIp);
+                    message.Content = new StringContent(txt.Text, Encoding.UTF8, "text/plain");
                     var response = Client.SendAsync(message).Result;
                     if (response.StatusCode == HttpStatusCode.OK)
                         MessageBox.Show(response.Content.ReadAsStringAsync().Result);
@@ -97,9 +90,7 @@ namespace NetworkProgramingBigHomeWork
                 }
             }
             else
-            {
                 MessageBox.Show("Text Is empty");
-            }
         }
     }
 }

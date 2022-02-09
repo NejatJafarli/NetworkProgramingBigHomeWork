@@ -39,8 +39,13 @@ namespace Server
                 var clientText = ClientReader.ReadToEnd();
                 var Method = Request.HttpMethod;
                 if (Request.HttpMethod == "POST")
+                {
                     if (clientText.ToUpper().Split('-')[0] == "GET")
                         Method = "GET";
+                    else if (clientText.ToUpper().Split('-')[0] == "DELETE")
+                        Method = "DELETE";
+                }
+
 
                 var CacheServer = new HttpClient();
                 switch (Method)
@@ -146,10 +151,28 @@ namespace Server
                         Response.Close();
                         break;
                     case "DELETE":
+                        var oldText = clientText;
+                        clientText = clientText.Split('-')[1];
                         var DeleteThisPerson = DbContext.Kvalues.Where(x => x.Key == clientText.Split('-')[0]).FirstOrDefault();
+                        if (DeleteThisPerson is null)
+                        {
+                            Console.WriteLine("Data Base Data Not Found For Delete");
+                            Response.StatusCode = 404;
+                            Response.Close();
+                            return;
+                        }
                         DbContext.Kvalues.DeleteOnSubmit(DeleteThisPerson);
-                        Console.WriteLine("Deleted In Database");
-                        CacheServer.DeleteAsync(CacheIp).Wait();
+                        Console.WriteLine("Data Deleted In Database");
+                        var CacheRequest = new HttpRequestMessage(HttpMethod.Post, CacheIp);
+                        var CacheResponse2 = CacheServer.PostAsync(CacheIp, new StringContent(oldText, Encoding.UTF8, "text/plain")).Result;
+                        keyValuePairs.Remove(clientText);
+
+                        if (CacheResponse2.StatusCode == HttpStatusCode.OK)
+                            Console.WriteLine("Data Deleted In Cache Server");
+                        else if (CacheResponse2.StatusCode == HttpStatusCode.NotFound)
+                            Console.WriteLine("Data Not Deleted In Cache Server");
+                        Response.StatusCode=200;
+                        Response.Close();
                         break;
                 }
 
