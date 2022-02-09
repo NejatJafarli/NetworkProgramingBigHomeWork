@@ -117,8 +117,6 @@ namespace Cache_Server
                         }
 
                         break;
-                    default:
-                        break;
                 }
             }
         }
